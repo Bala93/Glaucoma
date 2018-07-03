@@ -24,7 +24,7 @@ def imshow(inp, title=None):
         plt.title(title)
     plt.pause(0.001)  # pause a bit so that plots are updated
 
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler,save_path,num_epochs=25):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -79,7 +79,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-                model_save_path = '/media/htic/NewVolume1/murali/GE_project/status/weights/' + str(epoch) + '.pt'
+                model_save_path = os.path.join(save_path , str(epoch) + '.pt')
                 print ("Saving weights")
                 torch.save(model.state_dict(),model_save_path)
                 print ("Weights saved")
@@ -124,36 +124,43 @@ def visualize_model(model, num_images=6):
 
 dataset_path_map = {'train':'/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/Combined_RimOne_Origa/Normalized',
                         'val':'/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/ForValidation/Normalized'}
+save_path = '/media/htic/NewVolume1/murali/Glaucoma/models/Combined_RimOne_Origa_Normalized'
+CUDA_SELECT = "cuda:1" 
+
+print (dataset_path_map)
+print (CUDA_SELECT)
 
 data_transforms = {
     'train': transforms.Compose([
         #transforms.RandomResizedCrop(224),
         #transforms.RandomHorizontalFlip(),
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'val': transforms.Compose([
-        #transforms.Resize(256),
-        #transforms.CenterCrop(224),
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
 }
 
 image_datasets = {x: datasets.ImageFolder(dataset_path_map[x], data_transforms[x]) for x in ['train', 'val']}
-dataloaders    = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=8, shuffle=True, num_workers=4) for x in ['train', 'val']}
+dataloaders    = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=4) for x in ['train', 'val']}
 dataset_sizes  = {x: len(image_datasets[x]) for x in ['train', 'val']}
 class_names    = image_datasets['train'].classes
 # Just normalization for validation
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device(CUDA_SELECT if torch.cuda.is_available() else "cpu")
 # Get a batch of training data
 inputs, classes = next(iter(dataloaders['train']))
 # Make a grid from batch
 out = torchvision.utils.make_grid(inputs)
 imshow(out, title=[class_names[x] for x in classes])
 
-no_classes = 3
+no_classes = 2
 model_ft = models.resnet101(pretrained=True)
 num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, no_classes)
@@ -167,6 +174,6 @@ optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 # Decay LR by a factor of 0.1 every 7 epochs
 
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
-model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25)
+model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,save_path,num_epochs=25)
 
 visualize_model(model_ft)

@@ -24,30 +24,39 @@ def predict_class(model,img_path,device,data_transforms):
 
 if __name__ == "__main__":
 
-	# Device initilalization
-	device = torch.device("cuda:0")
+
+
+	device = torch.device("cuda:1")
+	trained_weight_path = '/media/htic/NewVolume1/murali/Glaucoma/models/Combined_RimOne_Origa_Normalized/15.pt' 
+	val_path = '/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/ForValidation/Normalized'
+	img_ext  = 'jpg'
+
 
 	# Normalization 
-	data_transforms = transforms.Compose([transforms.ToTensor(),transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])])
+	data_transforms = transforms.Compose([transforms.Resize(256),
+										  transforms.CenterCrop(224),
+										  transforms. transforms.ToTensor(),
+										  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])])
+
 
 	# No of classes
-	no_classes = 3
+	no_classes = 2
 
 	# Model initiliazation 
-	model_ft = models.resnet18(pretrained=False)
+	model_ft = models.resnet101(pretrained=False)
 	num_ftrs = model_ft.fc.in_features
 	model_ft.fc = nn.Linear(num_ftrs,no_classes)
 	model_ft.to(device)
 	
 	# Loading the pretrained weight and setting it to eval mode
-	trained_weight_path = '/media/htic/NewVolume1/murali/GE_project/status/weights/1.pt'
+	
 	model_ft.load_state_dict(torch.load(trained_weight_path))
 	model_ft.eval()
 
 	# Evaluation when the images of each class are placed in their corresponding folder
-	val_path = '/media/htic/NewVolume1/murali/GE_project/status/after_process/val/'
+
 	folders  = os.listdir(val_path) #['close','open','unknown']
-	img_ext  = 'png'
+	
 
 	# Storing the predicted and groundTruth
 	predicted = []

@@ -29,8 +29,8 @@ if __name__ == "__main__":
 
 
 	device = torch.device("cuda:0")
-	trained_weight_path = '/media/htic/NewVolume1/murali/Glaucoma/models/Combined_RimOne_Origa_PseudoDepth/1.pt' 
-	val_path = '/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/ForValidation/PseudoDepth'
+	trained_weight_path = '/media/htic/NewVolume1/murali/Glaucoma/models/Combined_RimOne_Origa_Normalized/3.pt' 
+	val_path = '/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/ForValidation/Normalized'
 	img_ext  = 'jpg'
 
 

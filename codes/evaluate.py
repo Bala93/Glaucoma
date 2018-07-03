@@ -18,17 +18,19 @@ def predict_class(model,img_path,device,data_transforms):
 	transformed_img = torch.unsqueeze(data_transforms(img),0)
 	transformed_img	= transformed_img.to(device)
 	output_prob = model(transformed_img)
+	output_prob = torch.nn.functional.softmax(output_prob)    
+	max_prob = torch.max(output_prob).item()
 	output = torch.argmax(output_prob).item()
 
-	return output
+	return output,max_prob
 
 if __name__ == "__main__":
 
 
 
-	device = torch.device("cuda:1")
-	trained_weight_path = '/media/htic/NewVolume1/murali/Glaucoma/models/Combined_RimOne_Origa_Normalized/15.pt' 
-	val_path = '/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/ForValidation/Normalized'
+	device = torch.device("cuda:0")
+	trained_weight_path = '/media/htic/NewVolume1/murali/Glaucoma/models/Combined_RimOne_Origa_PseudoDepth/1.pt' 
+	val_path = '/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/ForValidation/PseudoDepth'
 	img_ext  = 'jpg'
 
 
@@ -61,6 +63,7 @@ if __name__ == "__main__":
 	# Storing the predicted and groundTruth
 	predicted = []
 	groundTruth = []
+	scores = []
 	
 	# Iterating over the images 
 	for ind,folder in enumerate(folders):
@@ -69,22 +72,29 @@ if __name__ == "__main__":
 
 		for each in tqdm(glob.glob(img_path)):
 		    
-			output, = predict_class(model_ft,each,device,data_transforms)
+			output,confidence = predict_class(model_ft,each,device,data_transforms)
 			predicted.append(output)
 			groundTruth.append(ind)
+			scores.append(confidence)
 	
 	# Calculating the classification metrics
 	predicted = np.array(predicted)
 	groundTruth = np.array(groundTruth)
+	scores = np.array(scores)
+
+	ind_ = np.where(predicted == 0)
+	scores[ind_] = 1 - scores[ind_]
+
 	print ("Classes:")
 	print (','.join(folders))
 	conf_matrix  = confusion_matrix(groundTruth,predicted)#,labels =folders)
 	class_report = classification_report(groundTruth,predicted) 
 	acc_score    = accuracy_score(groundTruth,predicted)
-	auc_score    = roc_auc_score(groundTruth,)
+	auc_score    = roc_auc_score(groundTruth,scores)
 
 
 	print ("Confusion-matrix:\n",conf_matrix)
 	print ("Classification report:\n",class_report)
 	print ("Accuracy:",acc_score)
+	print ("AUC:",auc_score)
 

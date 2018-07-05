@@ -58,6 +58,8 @@ if __name__ == "__main__":
 		help = 'Specify the cuda id'
 	)
 
+	
+
 	'''
 	Example command:
 	python evaluate.py --model_path --val_path --img_ext --cuda_no
@@ -69,6 +71,10 @@ if __name__ == "__main__":
 	img_ext    = opt.img_ext
 	cuda_no    = opt.cuda_no
 	device = torch.device("cuda:{}".format(cuda_no))
+	print ("#########")
+	print ("Settings:")
+	print (vars(opt))
+	print ("#########")
 	#############################
 
 	# TODO: print statement by looking into the arguments
@@ -138,5 +144,4 @@ if __name__ == "__main__":
 	print ("Accuracy:",acc_score)
 
 	if no_classes == 2:
-    	print ("AUC:",auc_score)
-
+		print ("AUC:",auc_score)

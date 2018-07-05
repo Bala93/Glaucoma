@@ -165,8 +165,11 @@ if __name__ == "__main__":
     dataset_path_map = {'train':train_path,'val':val_path}
     CUDA_SELECT = "cuda:{}".format(cuda_no) 
 
-    print (dataset_path_map)
-    print (CUDA_SELECT)
+    print ("#########")
+	print ("Settings:")
+	print (vars(opt))
+	print ("#########")
+
 
     data_transforms = {
         'train': transforms.Compose([

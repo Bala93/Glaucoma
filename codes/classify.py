@@ -83,7 +83,7 @@ def train_model(model, criterion, optimizer, scheduler,save_path,num_epochs=25):
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-                model_save_path = os.path.join(save_path , str(epoch) + '.pt')
+                model_save_path = os.path.join(save_path ,'final.pt')
                 print ("Saving weights")
                 torch.save(model.state_dict(),model_save_path)
                 print ("Weights saved")
@@ -163,12 +163,11 @@ if __name__ == "__main__":
     save_path  = opt.save_path
     cuda_no    = opt.cuda_no
     dataset_path_map = {'train':train_path,'val':val_path}
-    CUDA_SELECT = "cuda:{}".format(cuda_no) 
-
+    CUDA_SELECT = "cuda:{}".format(cuda_no)
     print ("#########")
-	print ("Settings:")
-	print (vars(opt))
-	print ("#########")
+    print ("Settings:")
+    print (vars(opt))
+    print ("#########")
 
 
     data_transforms = {
@@ -199,7 +198,7 @@ if __name__ == "__main__":
     inputs, classes = next(iter(dataloaders['train']))
     # Make a grid from batch
     out = torchvision.utils.make_grid(inputs)
-    imshow(out, title=[class_names[x] for x in classes])
+    # imshow(out, title=[class_names[x] for x in classes])
 
     no_classes = 2
     model_ft = models.resnet101(pretrained=True)
@@ -215,6 +214,6 @@ if __name__ == "__main__":
     # Decay LR by a factor of 0.1 every 7 epochs
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
-    model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,save_path,num_epochs=25)
+    model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,save_path,num_epochs=1)
 
-    visualize_model(model_ft)
+    # visualize_model(model_ft)

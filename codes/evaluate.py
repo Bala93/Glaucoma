@@ -141,7 +141,7 @@ if __name__ == "__main__":
 	
 
 	# To calculate AUC, the function needs the confidence score of the positive class.
-	ind_ = np.where(predicted == 0)
+	ind_ = np.where(predicted == 1)
 	scores[ind_] = 1 - scores[ind_]
 	scores = np.round(scores,decimals=1)
 	result = np.hstack([img_names,scores])
@@ -156,7 +156,7 @@ if __name__ == "__main__":
 	acc_score    = accuracy_score(groundTruth,predicted)
 
 	if no_classes == 2:
-		auc_score = roc_auc_score(groundTruth,scores)
+		auc_score = roc_auc_score(1 - groundTruth,scores)
 
 	print ("Confusion-matrix:\n",conf_matrix)
 	print ("Classification report:\n",class_report)

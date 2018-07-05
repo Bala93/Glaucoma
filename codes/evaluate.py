@@ -52,7 +52,7 @@ if __name__ == "__main__":
 	)
 
 	parser.add_argument(
-		'cuda_no',
+		'--cuda_no',
 		required = True,
 		type = str,
 		help = 'Specify the cuda id'

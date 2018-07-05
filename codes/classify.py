@@ -11,6 +11,10 @@ import matplotlib.pyplot as plt
 import time
 import os
 import copy
+import argparse
+
+
+
 
 def imshow(inp, title=None):
     """Imshow for Tensor."""
@@ -122,58 +126,92 @@ def visualize_model(model, num_images=6):
         model.train(mode=was_training)
 
 
-dataset_path_map = {'train':'/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/Combined_RimOne_Origa/Normalized',
-                        'val':'/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/ForValidation/Normalized'}
-save_path = '/media/htic/NewVolume1/murali/Glaucoma/models/Combined_RimOne_Origa_Normalized'
-CUDA_SELECT = "cuda:1" 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser('Training the classifier')
+    parser.add_argument(
+		'--train_path',
+		required = True,
+		type = str,
+		help = 'path to the train data'
+	)
+    parser.add_argument(
+		'--val_path',
+		required = True,
+		type = str,
+		help = 'path to validate data'
+	)
+    parser.add_argument(
+        '--save_path',
+        required = True,
+        type = str,
+        help = 'model save path'
+    )
 
-print (dataset_path_map)
-print (CUDA_SELECT)
+    parser.add_argument(
+		'--cuda_no',
+		required = True,
+		type = str,
+		help = 'Specify the cuda id'
+	)
 
-data_transforms = {
-    'train': transforms.Compose([
-        #transforms.RandomResizedCrop(224),
-        #transforms.RandomHorizontalFlip(),
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ]),
-    'val': transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ]),
-}
+    '''
+    python classify.py --train_path --val_path --save_path --cuda_no
+    '''
+    opt = parser.parse_args()
+    train_path = opt.train_path
+    val_path   = opt.val_path
+    save_path  = opt.save_path
+    cuda_no    = opt.cuda_no
+    dataset_path_map = {'train':train_path,'val':val_path}
+    CUDA_SELECT = "cuda:{}".format(cuda_no) 
 
-image_datasets = {x: datasets.ImageFolder(dataset_path_map[x], data_transforms[x]) for x in ['train', 'val']}
-dataloaders    = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=4) for x in ['train', 'val']}
-dataset_sizes  = {x: len(image_datasets[x]) for x in ['train', 'val']}
-class_names    = image_datasets['train'].classes
-# Just normalization for validation
+    print (dataset_path_map)
+    print (CUDA_SELECT)
 
-device = torch.device(CUDA_SELECT if torch.cuda.is_available() else "cpu")
-# Get a batch of training data
-inputs, classes = next(iter(dataloaders['train']))
-# Make a grid from batch
-out = torchvision.utils.make_grid(inputs)
-imshow(out, title=[class_names[x] for x in classes])
+    data_transforms = {
+        'train': transforms.Compose([
+            #transforms.RandomResizedCrop(224),
+            #transforms.RandomHorizontalFlip(),
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+    }
 
-no_classes = 2
-model_ft = models.resnet101(pretrained=True)
-num_ftrs = model_ft.fc.in_features
-model_ft.fc = nn.Linear(num_ftrs, no_classes)
-model_ft = model_ft.to(device)
+    image_datasets = {x: datasets.ImageFolder(dataset_path_map[x], data_transforms[x]) for x in ['train', 'val']}
+    dataloaders    = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=4) for x in ['train', 'val']}
+    dataset_sizes  = {x: len(image_datasets[x]) for x in ['train', 'val']}
+    class_names    = image_datasets['train'].classes
+    # Just normalization for validation
 
-criterion = nn.CrossEntropyLoss()
+    device = torch.device(CUDA_SELECT if torch.cuda.is_available() else "cpu")
+    # Get a batch of training data
+    inputs, classes = next(iter(dataloaders['train']))
+    # Make a grid from batch
+    out = torchvision.utils.make_grid(inputs)
+    imshow(out, title=[class_names[x] for x in classes])
 
-# Observe that all parameters are being optimized
-optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+    no_classes = 2
+    model_ft = models.resnet101(pretrained=True)
+    num_ftrs = model_ft.fc.in_features
+    model_ft.fc = nn.Linear(num_ftrs, no_classes)
+    model_ft = model_ft.to(device)
 
-# Decay LR by a factor of 0.1 every 7 epochs
+    criterion = nn.CrossEntropyLoss()
 
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
-model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,save_path,num_epochs=25)
+    # Observe that all parameters are being optimized
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
-visualize_model(model_ft)
+    # Decay LR by a factor of 0.1 every 7 epochs
+
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
+    model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,save_path,num_epochs=25)
+
+    visualize_model(model_ft)

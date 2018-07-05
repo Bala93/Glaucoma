@@ -9,6 +9,8 @@ import glob
 from tqdm import tqdm
 import os
 from sklearn.metrics import confusion_matrix,classification_report,accuracy_score,roc_auc_score,roc_curve
+import argparse
+
 
 
 def predict_class(model,img_path,device,data_transforms):
@@ -26,20 +28,51 @@ def predict_class(model,img_path,device,data_transforms):
 
 if __name__ == "__main__":
 
+	## Parsing and assigning values
 
+	parser = argparse.ArgumentParser('Evaluating image classification')
+	parser.add_argument(
+		'--model_path',
+		required = True,
+		type = str,
+		help = 'path of the model file'
+	)
+	parser.add_argument(
+		'--val_path',
+		required = True,
+		type = str,
+		help = 'Path to validation images'
+	)
 
-	device = torch.device("cuda:0")
-	trained_weight_path = '/media/htic/NewVolume1/murali/Glaucoma/models/Combined_RimOne_Origa_Normalized/3.pt' 
-	val_path = '/media/htic/NewVolume1/murali/Glaucoma/Refuge/CroppedNormalized/Images/'
-	img_ext  = 'jpg'
+	parser.add_argument(
+		'--img_ext',
+		required = True,
+		type = str,
+		help = 'Image extension'
+	)
 
+	parser.add_argument(
+		'cuda_no',
+		required = True,
+		type = str,
+		help = 'Specify the cuda id'
+	)
+
+	opt = parser.parse_args()
+	trained_weight_path = opt.model_path
+	val_path   = opt.val_path
+	img_ext    = opt.img_ext
+	cuda_no    = opt.cuda_no
+	device = torch.device("cuda:{}".format(cuda_no))
+	#############################
+
+	# TODO: print statement by looking into the arguments
 
 	# Normalization 
 	data_transforms = transforms.Compose([transforms.Resize(256),
 										  transforms.CenterCrop(224),
 										  transforms. transforms.ToTensor(),
 										  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])])
-
 
 	# No of classes
 	no_classes = 2
@@ -91,11 +124,14 @@ if __name__ == "__main__":
 	conf_matrix  = confusion_matrix(groundTruth,predicted)#,labels =folders)
 	class_report = classification_report(groundTruth,predicted) 
 	acc_score    = accuracy_score(groundTruth,predicted)
-	auc_score    = roc_auc_score(groundTruth,scores)
 
+	if no_classes == 2:
+		auc_score = roc_auc_score(groundTruth,scores)
 
 	print ("Confusion-matrix:\n",conf_matrix)
 	print ("Classification report:\n",class_report)
 	print ("Accuracy:",acc_score)
-	print ("AUC:",auc_score)
+	
+	if no_classes == 2:
+    	print ("AUC:",auc_score)
 

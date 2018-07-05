@@ -11,7 +11,7 @@ import os
 from sklearn.metrics import confusion_matrix,classification_report,accuracy_score,roc_auc_score,roc_curve
 import argparse
 import pandas as pd
-
+import logging
 
 def predict_class(model,img_path,device,data_transforms):
     
@@ -67,7 +67,6 @@ if __name__ == "__main__":
 
 
 	
-	# TODO : Store the results in imagename,score format
 	'''
 	Example command:
 	python evaluate.py --model_path --val_path --img_ext --csv_path --cuda_no
@@ -79,16 +78,15 @@ if __name__ == "__main__":
 	img_ext    = opt.img_ext
 	csv_path   = opt.csv_path
 	cuda_no    = opt.cuda_no
-	device = torch.device("cuda:{}".format(cuda_no))
-	
+	device = torch.device("cuda:{}".format(cuda_no))	
+	log_path = os.path.join(os.path.dirname(csv_path),'metrics.log')
+	logging.basicConfig(filename=log_path,level=logging.INFO)
 
-	print ("#########")
-	print ("Settings:")
-	print (vars(opt))
-	print ("#########")
+	# print ("#########")
+	# print ("Settings:")
+	logging.info(vars(opt))
+	# print ("#########")
 	#############################
-
-	# TODO: print statement by looking into the arguments
 
 	# Normalization 
 	data_transforms = transforms.Compose([transforms.Resize(256),
@@ -149,8 +147,8 @@ if __name__ == "__main__":
 	df.to_csv(csv_path,header=['FileName','Glaucoma Risk'],index=False)
 
 
-	print ("Classes:")
-	print (','.join(folders))
+	logging.info("Classes:")
+	logging.info(','.join(folders))
 	conf_matrix  = confusion_matrix(groundTruth,predicted)#,labels =folders)
 	class_report = classification_report(groundTruth,predicted) 
 	acc_score    = accuracy_score(groundTruth,predicted)
@@ -158,9 +156,9 @@ if __name__ == "__main__":
 	if no_classes == 2:
 		auc_score = roc_auc_score(1 - groundTruth,scores)
 
-	print ("Confusion-matrix:\n",conf_matrix)
-	print ("Classification report:\n",class_report)
-	print ("Accuracy:",acc_score)
+	logging.info ("Confusion-matrix:\n{}".format(conf_matrix))
+	logging.info ("Classification report:\n{}".format(class_report))
+	logging.info ("Accuracy:{}".format(acc_score))
 
 	if no_classes == 2:
-		print ("AUC:",auc_score)
+		logging.info ("AUC:{}".format(auc_score))

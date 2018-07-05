@@ -12,7 +12,7 @@ import time
 import os
 import copy
 import argparse
-
+import logging
 
 
 
@@ -35,8 +35,8 @@ def train_model(model, criterion, optimizer, scheduler,save_path,num_epochs=25):
     best_acc = 0.0
 
     for epoch in range(num_epochs):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
+        logging.info('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        logging.info('-' * 10)
 
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
@@ -76,7 +76,7 @@ def train_model(model, criterion, optimizer, scheduler,save_path,num_epochs=25):
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects.double() / dataset_sizes[phase]
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+            logging.info('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
 
             # deep copy the model
@@ -84,16 +84,16 @@ def train_model(model, criterion, optimizer, scheduler,save_path,num_epochs=25):
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
                 model_save_path = os.path.join(save_path ,'final.pt')
-                print ("Saving weights")
+                logging.info("Saving weights")
                 torch.save(model.state_dict(),model_save_path)
-                print ("Weights saved")
+                logging.info("Weights saved")
 
-        print()
+        # print()
 
     time_elapsed = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(
+    logging.info('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
-    print('Best val Acc: {:4f}'.format(best_acc))
+    logging.info('Best val Acc: {:4f}'.format(best_acc))
 
     # load best model weights
     model.load_state_dict(best_model_wts)
@@ -154,6 +154,15 @@ if __name__ == "__main__":
 		help = 'Specify the cuda id'
 	)
 
+    # TODO: Handle the classifier for different available classifiers
+    # parser.add_argument(
+    #     '--model_name',
+    #     required = True,
+    #     type = str,
+    #     help = 'Give the available python types'   
+    # )
+
+
     '''
     python classify.py --train_path --val_path --save_path --cuda_no
     '''
@@ -161,14 +170,19 @@ if __name__ == "__main__":
     train_path = opt.train_path
     val_path   = opt.val_path
     save_path  = opt.save_path
+    log_path   = os.path.join(save_path,'train.log')
     cuda_no    = opt.cuda_no
     dataset_path_map = {'train':train_path,'val':val_path}
     CUDA_SELECT = "cuda:{}".format(cuda_no)
-    print ("#########")
-    print ("Settings:")
-    print (vars(opt))
-    print ("#########")
+    logging.basicConfig(filename=log_path,level=logging.INFO)
 
+    # print ("#########")
+    # print ("Settings:")
+
+    # print (vars(opt))
+    # print ("#########")
+
+    logging.info(vars(opt))
 
     data_transforms = {
         'train': transforms.Compose([

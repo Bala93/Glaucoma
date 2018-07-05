@@ -82,6 +82,7 @@ if __name__ == "__main__":
 	log_path = os.path.join(os.path.dirname(csv_path),'metrics.log')
 	logging.basicConfig(filename=log_path,level=logging.INFO)
 
+	logging.info("Starts here")
 	# print ("#########")
 	# print ("Settings:")
 	logging.info(vars(opt))
@@ -162,3 +163,4 @@ if __name__ == "__main__":
 
 	if no_classes == 2:
 		logging.info ("AUC:{}".format(auc_score))
+	logging.info("Ends here")

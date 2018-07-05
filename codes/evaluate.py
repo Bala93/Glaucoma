@@ -10,7 +10,7 @@ from tqdm import tqdm
 import os
 from sklearn.metrics import confusion_matrix,classification_report,accuracy_score,roc_auc_score,roc_curve
 import argparse
-
+import pandas as pd
 
 
 def predict_class(model,img_path,device,data_transforms):
@@ -52,25 +52,36 @@ if __name__ == "__main__":
 	)
 
 	parser.add_argument(
+		'--csv_path',
+		required = True,
+		type = str,
+		help = 'Path to csv'
+	)
+
+	parser.add_argument(
 		'--cuda_no',
 		required = True,
 		type = str,
 		help = 'Specify the cuda id'
 	)
 
-	
 
+	
+	# TODO : Store the results in imagename,score format
 	'''
 	Example command:
-	python evaluate.py --model_path --val_path --img_ext --cuda_no
+	python evaluate.py --model_path --val_path --img_ext --csv_path --cuda_no
 	'''
 
 	opt = parser.parse_args()
 	trained_weight_path = opt.model_path
 	val_path   = opt.val_path
 	img_ext    = opt.img_ext
+	csv_path   = opt.csv_path
 	cuda_no    = opt.cuda_no
 	device = torch.device("cuda:{}".format(cuda_no))
+	
+
 	print ("#########")
 	print ("Settings:")
 	print (vars(opt))
@@ -80,8 +91,8 @@ if __name__ == "__main__":
 	# TODO: print statement by looking into the arguments
 
 	# Normalization 
-	data_transforms = transforms.Compose([transforms.Resize(256),
-										  transforms.CenterCrop(224),
+	data_transforms = transforms.Compose([transforms.Resize(224),
+										#   transforms.CenterCrop(224),
 										  transforms. transforms.ToTensor(),
 										  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])])
 
@@ -102,29 +113,34 @@ if __name__ == "__main__":
 	# Evaluation when the images of each class are placed in their corresponding folder
 
 	folders  = os.listdir(val_path) #['close','open','unknown']
-	
 
 	# Storing the predicted and groundTruth
 	predicted = []
 	groundTruth = []
 	scores = []
-	
+	img_names = []	
+
 	# Iterating over the images 
 	for ind,folder in enumerate(folders):
     		
 		img_path = os.path.join(val_path,folder,'*.'+img_ext)
 
 		for each in tqdm(glob.glob(img_path)):
-		    
+    		img_name = os.path.basename(each)
 			output,confidence = predict_class(model_ft,each,device,data_transforms)
 			predicted.append(output)
 			groundTruth.append(ind)
 			scores.append(confidence)
+			img_names.append(img_name)
 	
 	# Calculating the classification metrics
 	predicted = np.array(predicted)
 	groundTruth = np.array(groundTruth)
 	scores = np.array(scores)
+	img_names = np.array(img_names)
+	result = np.hstack([img_names,scores])
+	df = pd.DataFrame(result)
+	df.to_csv(csv_path,header=['FileName','Glaucoma Risk'],index=False)
 
 	# To calculate AUC, the function needs the confidence score of the positive class.
 	ind_ = np.where(predicted == 0)

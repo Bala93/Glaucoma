@@ -91,8 +91,8 @@ if __name__ == "__main__":
 	# TODO: print statement by looking into the arguments
 
 	# Normalization 
-	data_transforms = transforms.Compose([transforms.Resize(224),
-										#   transforms.CenterCrop(224),
+	data_transforms = transforms.Compose([transforms.Resize(256),
+										  transforms.CenterCrop(224),
 										  transforms. transforms.ToTensor(),
 										  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])])
 
@@ -126,25 +126,28 @@ if __name__ == "__main__":
 		img_path = os.path.join(val_path,folder,'*.'+img_ext)
 
 		for each in tqdm(glob.glob(img_path)):
-    		img_name = os.path.basename(each)
+			img_name = os.path.basename(each)
 			output,confidence = predict_class(model_ft,each,device,data_transforms)
-			predicted.append(output)
-			groundTruth.append(ind)
-			scores.append(confidence)
-			img_names.append(img_name)
+			predicted.append([output])
+			groundTruth.append([ind])
+			scores.append([confidence])
+			img_names.append([img_name])
 	
 	# Calculating the classification metrics
 	predicted = np.array(predicted)
 	groundTruth = np.array(groundTruth)
 	scores = np.array(scores)
 	img_names = np.array(img_names)
-	result = np.hstack([img_names,scores])
-	df = pd.DataFrame(result)
-	df.to_csv(csv_path,header=['FileName','Glaucoma Risk'],index=False)
+	
 
 	# To calculate AUC, the function needs the confidence score of the positive class.
 	ind_ = np.where(predicted == 0)
 	scores[ind_] = 1 - scores[ind_]
+	scores = np.round(scores,decimals=1)
+	result = np.hstack([img_names,scores])
+	df = pd.DataFrame(result)
+	df.to_csv(csv_path,header=['FileName','Glaucoma Risk'],index=False)
+
 
 	print ("Classes:")
 	print (','.join(folders))

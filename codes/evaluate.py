@@ -58,6 +58,11 @@ if __name__ == "__main__":
 		help = 'Specify the cuda id'
 	)
 
+	'''
+	Example command:
+	python evaluate.py --model_path --val_path --img_ext --cuda_no
+	'''
+
 	opt = parser.parse_args()
 	trained_weight_path = opt.model_path
 	val_path   = opt.val_path
@@ -131,7 +136,7 @@ if __name__ == "__main__":
 	print ("Confusion-matrix:\n",conf_matrix)
 	print ("Classification report:\n",class_report)
 	print ("Accuracy:",acc_score)
-	
+
 	if no_classes == 2:
     	print ("AUC:",auc_score)
 

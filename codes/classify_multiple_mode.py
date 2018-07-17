@@ -84,10 +84,11 @@ def train_model(model, criterion, optimizer, scheduler,save_path,num_epochs=25):
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
                 model_save_path = os.path.join(save_path ,'final.pt')
-                logging.info("Saving weights")
+                # logging.info("Saving weights")
                 torch.save(model.state_dict(),model_save_path)
-                logging.info("Weights saved")
-
+                # logging.info("Weights saved")
+            if phase == 'val':
+                torch.save(model.state_dict(),os.path.join(save_path,str(epoch)+'.pt'))
         # print()
 
     time_elapsed = time.time() - since
@@ -215,7 +216,8 @@ if __name__ == "__main__":
     # Make a grid from batch
     out = torchvision.utils.make_grid(inputs)
     # imshow(out, title=[class_names[x] for x in classes])
-    # Get from no of folders
+
+    # TODO: Fill no of classed based on the number of folders
     no_classes = 3
     model_ft = models.resnet101(pretrained=True)
     num_ftrs = model_ft.fc.in_features

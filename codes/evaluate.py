@@ -20,8 +20,9 @@ def predict_class(model,img_path,device,data_transforms):
 	transformed_img = torch.unsqueeze(data_transforms(img),0)
 	transformed_img	= transformed_img.to(device)
 	output_prob = model(transformed_img)
-	output_prob = torch.nn.functional.softmax(output_prob)    
-	max_prob = torch.max(output_prob).item()
+	#output_prob = torch.nn.functional.softmax(output_prob)    
+	#max_prob = torch.max(output_prob).item()
+	max_prob = np.exp(torch.max(output_prob).item())
 	output = torch.argmax(output_prob).item()
 
 	return output,max_prob
@@ -101,7 +102,7 @@ if __name__ == "__main__":
 	# Model initiliazation 
 	model_ft = models.resnet101(pretrained=False)
 	num_ftrs = model_ft.fc.in_features
-	model_ft.fc = nn.Linear(num_ftrs,no_classes)
+	model_ft.fc = nn.Sequential(nn.Linear(num_ftrs,no_classes),nn.LogSoftmax())
 	model_ft.to(device)
 	
 	# Loading the pretrained weight and setting it to eval mode

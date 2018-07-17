@@ -1,0 +1,5 @@
+model_path='/media/htic/NewVolume1/murali/Glaucoma/models/Combined_RimOne_Origa_PseudoDepth/final.pt'
+test_path='/media/htic/NewVolume1/murali/Glaucoma/PretrainDataSets/ForValidation/PseudoDepth/'
+img_ext='jpg'
+csv_path='/media/htic/Balamurali/Sharath/Gl_challenge/REFUGE-Validation400/Results/result2.csv'
+python test.py --model_path ${model_path} --test_path ${test_path} --img_ext ${img_ext} --csv_path ${csv_path} --cuda_no '0'  

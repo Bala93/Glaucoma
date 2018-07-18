@@ -114,5 +114,6 @@ if __name__ == "__main__":
     scores[ind_] = 1 - scores[ind_]
     scores = np.round(scores,decimals=1)
     result = np.hstack([img_names,scores,predicted])
+    #result = np.hstack([img_names,scores])
     df = pd.DataFrame(result)
     df.to_csv(csv_path,header=['FileName','Glaucoma Risk','Predicted'],index=False)

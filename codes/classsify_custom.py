@@ -16,8 +16,6 @@ import logging
 from model_custom import ModelSelect
 
 
-
-
 def imshow(inp, title=None):
     """Imshow for Tensor."""
     inp = inp.numpy().transpose((1, 2, 0))
@@ -82,13 +80,15 @@ def train_model(model, criterion, optimizer, scheduler,save_path,num_epochs=25):
                 phase, epoch_loss, epoch_acc))
 
             # deep copy the model
-            if phase == 'val' and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(model.state_dict())
-                model_save_path = os.path.join(save_path ,'final.pt')
-                logging.info("Saving weights")
-                torch.save(model.state_dict(),model_save_path)
-                logging.info("Weights saved")
+            # if phase == 'val': #and epoch_acc > best_acc:
+            #     # best_acc = epoch_acc
+            #     best_model_wts = copy.deepcopy(model.state_dict())
+            #     model_save_path = os.path.join(save_path ,'final.pt')
+            #     logging.info("Saving weights")
+            #     torch.save(model.state_dict(),model_save_path)
+            #     logging.info("Weights saved")
+            if phase == 'val':
+                torch.save(model.state_dict(),os.path.join(save_path,str(epoch)+'.pt'))
 
         # print()
 

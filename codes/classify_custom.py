@@ -95,11 +95,11 @@ def train_model(model, criterion, optimizer, scheduler,save_path,num_epochs=25):
     time_elapsed = time.time() - since
     logging.info('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
-    logging.info('Best val Acc: {:4f}'.format(best_acc))
+    #logging.info('Best val Acc: {:4f}'.format(best_acc))
 
     # load best model weights
-    model.load_state_dict(best_model_wts)
-    return model
+    #model.load_state_dict(best_model_wts)
+    return #model
 
 def visualize_model(model, num_images=6):
     was_training = model.training
@@ -166,7 +166,7 @@ if __name__ == "__main__":
         help = 'give one of the available model name -- resnet50,resnet101,resnet152,densenet161,densenet169,densenet201,vgg16_bn,vgg19_bn,inception'
     )
 
-    parser,add_argument(
+    parser.add_argument(
         '--no_classes',
         required = True,
         type = str,
@@ -194,7 +194,9 @@ if __name__ == "__main__":
 
 
     # TODO :  Can handle loss function.
-    
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+
     dataset_path_map = {'train':train_path,'val':val_path}
     CUDA_SELECT = "cuda:{}".format(cuda_no)
     log_path   = os.path.join(save_path,'train.log')
@@ -248,7 +250,7 @@ if __name__ == "__main__":
     # Decay LR by a factor of 0.1 every 7 epochs
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
-    model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,save_path,num_epochs=30)
+    train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,save_path,num_epochs=30)
     logging.info("Ends here")
 
     # visualize_model(model_ft)

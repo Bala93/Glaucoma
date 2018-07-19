@@ -19,7 +19,6 @@ def predict_class(model,img_path,device,data_transforms):
 	img = Image.open(img_path)
 	transformed_img = torch.unsqueeze(data_transforms(img),0)
 	transformed_img	= transformed_img.to(device)
-:q!
 	output_prob = model(transformed_img)
 	#output_prob = torch.nn.functional.softmax(output_prob)    
 	#max_prob = torch.max(output_prob).item()
@@ -67,11 +66,17 @@ if __name__ == "__main__":
 		help = 'Specify the cuda id'
 	)
 
+	parser.add_argument(
+		'--model_name',
+		required = True,
+		type = str,
+		help = 'Specify the cuda id'
+	)
 
 	
 	'''
 	Example command:
-	python evaluate.py --model_path --val_path --img_ext --csv_path --cuda_no
+	python evaluate.py --model_path --val_path --img_ext --csv_path --cuda_no --model_name
 	'''
 
 	opt = parser.parse_args()
@@ -98,12 +103,12 @@ if __name__ == "__main__":
 										  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])])
 
 	# No of classes
-	no_classes = 2
-
+	
 	# Model initiliazation 
-	model_ft = models.resnet101(pretrained=False)
-	num_ftrs = model_ft.fc.in_features
-	model_ft.fc = nn.Sequential(nn.Linear(num_ftrs,no_classes),nn.LogSoftmax())
+	is_pretrained = False
+	no_classes = 2
+	model_ft = ModelSelect(model_name,is_pretrained,no_classes).getModel()
+    model_ft = nn.Sequential(model_ft,nn.LogSoftmax())
 	model_ft.to(device)
 	
 	# Loading the pretrained weight and setting it to eval mode

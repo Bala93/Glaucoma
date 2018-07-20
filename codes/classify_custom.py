@@ -241,6 +241,7 @@ if __name__ == "__main__":
     model_ft = ModelSelect(model_name,is_pretrained,no_classes).getModel()
     model_ft = nn.Sequential(model_ft,nn.LogSoftmax())
     model_ft = model_ft.to(device)
+    print (model_ft)
 
     criterion = nn.NLLLoss()
 

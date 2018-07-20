@@ -12,9 +12,10 @@ from sklearn.metrics import confusion_matrix,classification_report,accuracy_scor
 import argparse
 import pandas as pd
 import logging
+from model_custom import ModelSelect
 
 def predict_class(model,img_path,device,data_transforms):
-    
+
 	# Read the image do data transform and pass it to model and find the class with maximum value
 	img = Image.open(img_path)
 	transformed_img = torch.unsqueeze(data_transforms(img),0)
@@ -33,47 +34,47 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser('Evaluating image classification')
 	parser.add_argument(
-		'--model_path',
-		required = True,
-		type = str,
-		help = 'path of the model file'
+	'--model_path',
+	required = True,
+	type = str,
+	help = 'path of the model file'
 	)
 	parser.add_argument(
-		'--val_path',
-		required = True,
-		type = str,
-		help = 'Path to validation images'
+	'--val_path',
+	required = True,
+	type = str,
+	help = 'Path to validation images'
 	)
 
 	parser.add_argument(
-		'--img_ext',
-		required = True,
-		type = str,
-		help = 'Image extension'
+	'--img_ext',
+	required = True,
+	type = str,
+	help = 'Image extension'
 	)
 
 	parser.add_argument(
-		'--csv_path',
-		required = True,
-		type = str,
-		help = 'Path to csv'
+	'--csv_path',
+	required = True,
+	type = str,
+	help = 'Path to csv'
 	)
 
 	parser.add_argument(
-		'--cuda_no',
-		required = True,
-		type = str,
-		help = 'Specify the cuda id'
+	'--cuda_no',
+	required = True,
+	type = str,
+	help = 'Specify the cuda id'
 	)
-
-	parser.add_argument(
-		'--model_name',
-		required = True,
-		type = str,
-		help = 'Specify the cuda id'
-	)
-
 	
+	parser.add_argument(
+	'--model_name',
+	required = True,
+	type = str,
+	help = 'Specify the model name'
+        )
+
+
 	'''
 	Example command:
 	python evaluate.py --model_path --val_path --img_ext --csv_path --cuda_no --model_name
@@ -85,7 +86,13 @@ if __name__ == "__main__":
 	img_ext    = opt.img_ext
 	csv_path   = opt.csv_path
 	cuda_no    = opt.cuda_no
+	model_name = opt.model_name
 	device = torch.device("cuda:{}".format(cuda_no))	
+
+	if (not os.path.exists(csv_path)):
+		os.mkdir(csv_path)	
+	csv_path = os.path.join(csv_path,'result.csv')
+
 	log_path = os.path.join(os.path.dirname(csv_path),'metrics.log')
 	logging.basicConfig(filename=log_path,level=logging.INFO)
 
@@ -98,76 +105,84 @@ if __name__ == "__main__":
 
 	# Normalization 
 	data_transforms = transforms.Compose([transforms.Resize(256),
-										  transforms.CenterCrop(224),
-										  transforms. transforms.ToTensor(),
-										  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])])
+				transforms.CenterCrop(224),
+				transforms. transforms.ToTensor(),
+				transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])])
 
 	# No of classes
-	
-	# Model initiliazation 
-	is_pretrained = False
 	no_classes = 2
+	is_pretrained = False
+	# Model initiliazation 
 	model_ft = ModelSelect(model_name,is_pretrained,no_classes).getModel()
-    model_ft = nn.Sequential(model_ft,nn.LogSoftmax())
-	model_ft.to(device)
+	model_ft = nn.Sequential(model_ft,nn.LogSoftmax())
+	model_ft = model_ft.to(device)
 	
-	# Loading the pretrained weight and setting it to eval mode
-	
-	model_ft.load_state_dict(torch.load(trained_weight_path))
-	model_ft.eval()
+	best_auc = 0 
 
-	# Evaluation when the images of each class are placed in their corresponding folder
+	for weight_path in glob.glob(os.path.join(trained_weight_path,'*.pt')):
 
-	folders  = os.listdir(val_path) #['close','open','unknown']
+		logging.info(weight_path)
+		# Loading the pretrained weight and setting it to eval mode
 
-	# Storing the predicted and groundTruth
-	predicted = []
-	groundTruth = []
-	scores = []
-	img_names = []	
+		model_ft.load_state_dict(torch.load(weight_path))
+		model_ft.eval()
 
-	# Iterating over the images 
-	for ind,folder in enumerate(folders):
-    		
-		img_path = os.path.join(val_path,folder,'*.'+img_ext)
+		# Evaluation when the images of each class are placed in their corresponding folder
 
-		for each in tqdm(glob.glob(img_path)):
-			img_name = os.path.basename(each)
-			output,confidence = predict_class(model_ft,each,device,data_transforms)
-			predicted.append([output])
-			groundTruth.append([ind])
-			scores.append([confidence])
-			img_names.append([img_name])
-	
-	# Calculating the classification metrics
-	predicted = np.array(predicted)
-	groundTruth = np.array(groundTruth)
-	scores = np.array(scores)
-	img_names = np.array(img_names)
-	
+		folders  = os.listdir(val_path) #['close','open','unknown']
 
-	# To calculate AUC, the function needs the confidence score of the positive class.
-	ind_ = np.where(predicted == 1)
-	scores[ind_] = 1 - scores[ind_]
-	scores = np.round(scores,decimals=1)
-	result = np.hstack([img_names,scores])
-	df = pd.DataFrame(result)
-	df.to_csv(csv_path,header=['FileName','Glaucoma Risk'],index=False)
+		# Storing the predicted and groundTruth
+		predicted = []
+		groundTruth = []
+		scores = []
+		img_names = []	
+
+		# Iterating over the images 
+		for ind,folder in enumerate(folders):
+
+			img_path = os.path.join(val_path,folder,'*.'+img_ext)
+
+			for each in tqdm(glob.glob(img_path)):
+				img_name = os.path.basename(each)
+				output,confidence = predict_class(model_ft,each,device,data_transforms)
+				predicted.append([output])
+				groundTruth.append([ind])
+				scores.append([confidence])
+				img_names.append([img_name])
+
+			# Calculating the classification metrics
+		predicted = np.array(predicted)
+		groundTruth = np.array(groundTruth)
+		scores = np.array(scores)
+		img_names = np.array(img_names)
 
 
-	logging.info("Classes:")
-	logging.info(','.join(folders))
-	conf_matrix  = confusion_matrix(groundTruth,predicted)#,labels =folders)
-	class_report = classification_report(groundTruth,predicted) 
-	acc_score    = accuracy_score(groundTruth,predicted)
+		# To calculate AUC, the function needs the confidence score of the positive class.
+		ind_ = np.where(predicted == 1)
+		scores[ind_] = 1 - scores[ind_]
+		scores = np.round(scores,decimals=1)
+		result = np.hstack([img_names,scores,predicted])
+		df = pd.DataFrame(result)
 
-	if no_classes == 2:
-		auc_score = roc_auc_score(1 - groundTruth,scores)
 
-	logging.info ("Confusion-matrix:\n{}".format(conf_matrix))
-	logging.info ("Classification report:\n{}".format(class_report))
-	logging.info ("Accuracy:{}".format(acc_score))
+		logging.info("Classes:")
+		logging.info(','.join(folders))
+		conf_matrix  = confusion_matrix(groundTruth,predicted)#,labels =folders)
+		class_report = classification_report(groundTruth,predicted) 
+		acc_score    = accuracy_score(groundTruth,predicted)
 
-	if no_classes == 2:
-		logging.info ("AUC:{}".format(auc_score))
-	logging.info("Ends here")
+		if no_classes == 2:
+			auc_score = roc_auc_score(1 - groundTruth,scores)
+			if auc_score > best_auc:
+				best_auc = auc_score
+				df.to_csv(csv_path,header=['FileName','Glaucoma Risk','Predicted'],index=False)
+				best_epoch = weight_path 
+
+		logging.info ("Confusion-matrix:\n{}".format(conf_matrix))
+		logging.info ("Classification report:\n{}".format(class_report))
+		logging.info ("Accuracy:{}".format(acc_score))
+
+		if no_classes == 2:
+			logging.info ("AUC:{}".format(auc_score))
+			logging.info("Ends here")
+			logging.info(best_epoch)

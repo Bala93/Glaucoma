@@ -5,7 +5,7 @@ cuda_no=0
 no_classes=2
 is_pretrained=1
 
-for model_name in 'vgg16_bn' 'vgg19_bn' 'inception' #'resnet101' 'resnet152' 'densenet169' 'densenet201'  
+for model_name in 'inception' #'resnet101' 'resnet152' 'densenet169' 'densenet201'  'vgg16_bn' 'vgg19_bn' 
   do
   for color in 'LAB' 'Normalized' 'PseudoDepth'
    do 

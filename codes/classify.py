@@ -164,7 +164,7 @@ if __name__ == "__main__":
 
 
     '''
-    python classify.py --train_path --val_path --save_path --cuda_no
+    python classify.py --train_path /media/htic/Kums/classes/train --val_path /media/htic/Kums/classes/validate --save_path /media/htic/Kums/models --cuda_no 0
     '''
     opt = parser.parse_args()
     train_path = opt.train_path

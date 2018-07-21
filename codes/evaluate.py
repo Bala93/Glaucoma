@@ -12,6 +12,7 @@ from sklearn.metrics import confusion_matrix,classification_report,accuracy_scor
 import argparse
 import pandas as pd
 import logging
+from model_custom import ModelSelect
 
 def predict_class(model,img_path,device,data_transforms):
     
@@ -19,7 +20,7 @@ def predict_class(model,img_path,device,data_transforms):
 	img = Image.open(img_path)
 	transformed_img = torch.unsqueeze(data_transforms(img),0)
 	transformed_img	= transformed_img.to(device)
-:q!
+
 	output_prob = model(transformed_img)
 	#output_prob = torch.nn.functional.softmax(output_prob)    
 	#max_prob = torch.max(output_prob).item()
@@ -101,10 +102,12 @@ if __name__ == "__main__":
 	no_classes = 2
 
 	# Model initiliazation 
-	model_ft = models.resnet101(pretrained=False)
-	num_ftrs = model_ft.fc.in_features
-	model_ft.fc = nn.Sequential(nn.Linear(num_ftrs,no_classes),nn.LogSoftmax())
-	model_ft.to(device)
+	# no_classes = 2
+	is_pretrained = False
+	# Model initiliazation 
+	model_ft = ModelSelect(model_name,is_pretrained,no_classes).getModel()
+	model_ft = nn.Sequential(model_ft,nn.LogSoftmax())
+	model_ft = model_ft.to(device)
 	
 	# Loading the pretrained weight and setting it to eval mode
 	

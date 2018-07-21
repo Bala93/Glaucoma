@@ -8,7 +8,7 @@ from PIL import Image
 import glob
 from tqdm import tqdm
 import os
-from sklearn.metrics import confusion_matrix,classification_report,accuracy_score,roc_auc_score,roc_curve
+from sklearn.metrics import confusion_matrix,classification_report,accuracy_score,roc_auc_score,roc_curve,f1_score
 import argparse
 import pandas as pd
 import logging
@@ -91,15 +91,15 @@ if __name__ == "__main__":
 
 	if (not os.path.exists(csv_path)):
 		os.mkdir(csv_path)	
-	csv_path = os.path.join(csv_path,'result.csv')
+	# csv_path = os.path.join(csv_path,'result.csv')
 
 	log_path = os.path.join(os.path.dirname(csv_path),'metrics.log')
 	logging.basicConfig(filename=log_path,level=logging.INFO)
 
-	logging.info("Starts here")
+	#logging.info("Starts here")
 	# print ("#########")
 	# print ("Settings:")
-	logging.info(vars(opt))
+	#logging.info(vars(opt))
 	# print ("#########")
 	#############################
 
@@ -117,11 +117,14 @@ if __name__ == "__main__":
 	model_ft = nn.Sequential(model_ft,nn.LogSoftmax())
 	model_ft = model_ft.to(device)
 	
-	best_auc = 0 
+	best_measure = 0 
+	model_ext = '*.{}'.format('pt')
+	csv_filename = 'result.csv'
 
-	for weight_path in glob.glob(os.path.join(trained_weight_path,'*.pt')):
-
-		logging.info(weight_path)
+	for weight_path in glob.glob(os.path.join(trained_weight_path,model_ext)):
+	
+		#logging.info(weight_path)
+		print(weight_path)
 		# Loading the pretrained weight and setting it to eval mode
 
 		model_ft.load_state_dict(torch.load(weight_path))
@@ -165,24 +168,32 @@ if __name__ == "__main__":
 		df = pd.DataFrame(result)
 
 
-		logging.info("Classes:")
-		logging.info(','.join(folders))
+		#logging.info("Classes:")
+		#logging.info(','.join(folders))
 		conf_matrix  = confusion_matrix(groundTruth,predicted)#,labels =folders)
 		class_report = classification_report(groundTruth,predicted) 
 		acc_score    = accuracy_score(groundTruth,predicted)
+		f1_score_ = f1_score(groundTruth,predicted)
 
 		if no_classes == 2:
 			auc_score = roc_auc_score(1 - groundTruth,scores)
-			if auc_score > best_auc:
-				best_auc = auc_score
-				df.to_csv(csv_path,header=['FileName','Glaucoma Risk','Predicted'],index=False)
+			score_avg = (auc_score) #+f1_score_)/2
+			# score_auc = 0.7*auc_score + 0.3*f1_score_
+			if score_avg > best_measure:
+				best_measure = score_avg
+				#df.to_csv(os.path.join(csv_path,os.path.basename(weight_path).replace('pt','csv')),header=['FileName','Glaucoma Risk','Predicted'],index=False)
+				df.to_csv(os.path.join(csv_path,csv_filename),header=['FileName','Glaucoma Risk','Predicted'],index=False)
+				torch.save(model_ft.state_dict(),os.path.join(csv_path,'result.pt'))
 				best_epoch = weight_path 
-
-		logging.info ("Confusion-matrix:\n{}".format(conf_matrix))
-		logging.info ("Classification report:\n{}".format(class_report))
-		logging.info ("Accuracy:{}".format(acc_score))
-
-		if no_classes == 2:
-			logging.info ("AUC:{}".format(auc_score))
-			logging.info("Ends here")
-			logging.info(best_epoch)
+	
+	logging.info("Best epoch -- AUC -- {} -- {}".format(best_measure,best_epoch))			
+		#logging.info ("Confusion-matrix:\n{}".format(conf_matrix))
+		#logging.info ("Classification report:\n{}".format(class_report))
+		#logging.info ("Accuracy:{}".format(acc_score))
+		
+		#if no_classes == 2:
+			
+			#logging.info ("AUC:{}".format(auc_score))
+			#logging.info ("F1Score:{}".format(f1_score_))
+			#logging.info("Ends here")
+			#logging.info(best_epoch)

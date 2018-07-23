@@ -2,18 +2,22 @@ import pandas as pd
 import numpy as np
 import os 
 from scipy import stats
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score,classification_report
+import itertools
 
-out_csv = '/media/htic/Balamurali/Glaucoma_models/submit.csv'
+out_csv = '/media/htic/Balamurali/Glaucoma_models/classification_results.csv'
 src_path = '/media/htic/Balamurali/Glaucoma_models/'
-csv_name = 'output.csv'
 test_data_len = 400
 color_space = ['LAB','Normalized','PseudoDepth']
-models = ['densenet169','resnet101','densenet201']
+models = ['resnet152']#,'densenet201','resnet101','densenet169']
 score_np = np.empty([test_data_len,0])
 pred_np  = np.empty([test_data_len,0])
-is_test  = False
 
+
+
+# Change for test
+is_test  = False
+csv_name = 'output.csv' 
 
 for model in models:
 
@@ -29,6 +33,7 @@ for model in models:
 
 		# break
 	# break
+#print (file_names)
 best_predict,_ = stats.mode(pred_np,axis=1)
 best_predict = best_predict.astype(np.uint8)
 
@@ -37,6 +42,8 @@ score_np_max = np.max(score_np,axis=1).reshape(400,1)
 
 zero_mask = np.where(best_predict == 0)
 one_mask  = np.where(best_predict == 1)
+
+print(zero_mask[0].shape)
 
 result_score = np.zeros([400,1])
 result_score[zero_mask] = score_np_max[zero_mask]
@@ -49,6 +56,7 @@ if is_test:
 	gt[:40] = 1
 	# print(gt)
 	print(roc_auc_score(gt,result_score)) 
+
 
 result = np.hstack([file_names,result_score])
 df = pd.DataFrame(result)
